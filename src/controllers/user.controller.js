@@ -8,6 +8,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 const generateAccessAndRefreshToken =async (userId) => {
     try {
         const user = await User.findById(userId)
+        
         const accessToken = user.generateAccessToken()
         const refreshToken = user.generateRefreshToken()
         // Here we have taken access and refresh token from the user model
@@ -39,8 +40,8 @@ const registerUser = asyncHandler(async (req, res) => {
         // Step 9: Return Response
 
     const {fullName, email, username, password} = req.body
-    console.log("Email: ", email);
-    console.log("Username: ", username);
+    
+    
 
     // Therer is a simple way to validate the data
     /*if (!fullName || !email || !username || !password) {
@@ -65,7 +66,7 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new ApiError(409, "User already exists with this username or email");
     }
 
-    console.log(req.files);
+    // console.log(req.files);
     
 
     // check for image and avatar
@@ -79,8 +80,8 @@ const registerUser = asyncHandler(async (req, res) => {
         coverImageLocalPath = req.files.coverImage[0].path;        
     }
 
-    console.log("Avatar Local Path: ", avatarLocalPath);
-    console.log("Cover Image Local Path: ", coverImageLocalPath);
+    // console.log("Avatar Local Path: ", avatarLocalPath);
+    // console.log("Cover Image Local Path: ", coverImageLocalPath);
 
     if (!avatarLocalPath || !coverImageLocalPath) {
         throw new ApiError(400, "Avatar and Cover Image are required");
@@ -90,22 +91,29 @@ const registerUser = asyncHandler(async (req, res) => {
     const avatar = await uploadOnCloudinary(avatarLocalPath)
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
-    console.log("Avatar: ", avatar);
-    console.log("Cover Image: ", coverImage);
+    // console.log("Avatar: ", avatar);
+    // console.log("Cover Image: ", coverImage);
     
 
     if (!avatarLocalPath || !coverImageLocalPath) {
-        throw new ApiError(400, "Avatar and Cover Image are required");
+        return res.status(500).json({
+            success: false,
+            message: "File upload failed",
+        });
     }
 
     const user = await User.create({
         fullName,
         email,
         username: username.toLowerCase(),
-        password,
+        password, 
         avatar: avatar.url,
         coverImage: coverImage?.url || "", // coverImage is optional, so we can set it to an empty string if not provided
-    })
+    });
+    // console.log("Before save: ", user.password);
+    // await user.save() // this will save the user in the database
+    // console.log("after save: ", user.password);
+    
 
     // we can do it by undefining the password and refreshToken fields
     // user.password = undefined;
@@ -136,7 +144,7 @@ const loginUser = asyncHandler(async (req, res)=> {
     // Step 1: Get the user data from frontend
     const {username, email, password} = req.body
 
-    if (!username || !email) {
+    if (!username && !email) {
         throw new ApiError(400, "Username or Email are required");
     }
 
@@ -146,7 +154,7 @@ const loginUser = asyncHandler(async (req, res)=> {
     // $or is a mongoDB operator
     const user = await User.findOne({
         $or: [{username}, {email}]
-    })
+    }).select('+password +refreshToken'); // select the password and refreshToken fields to check them later
 
     //Step 3: Check if user exists in the database if not throw error
     if (!user) {
@@ -188,8 +196,6 @@ const loginUser = asyncHandler(async (req, res)=> {
             }
             , "User logged in successfully")
     )
-
-        const loggedOutUser = asyncHandler(async (req, res) => {})
 
 })
 

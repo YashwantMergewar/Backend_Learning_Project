@@ -2,6 +2,8 @@ import {v2 as cloudinary} from 'cloudinary';
 import { response } from 'express';
 import fs from 'fs';
 import path from 'path';
+import dotenv from 'dotenv';
+dotenv.config(); // Adjust the path to your .env file if necessary
 
 cloudinary.config({ 
         cloud_name: process.env.CLOUDINARY_CLOUD_NAME, 
@@ -10,7 +12,7 @@ cloudinary.config({
     });
 
 const uploadOnCloudinary = async (localFilePath) => {
-    console.log("Uploading file to Cloudinary: ", localFilePath);
+    // console.log("Uploading file to Cloudinary: ", localFilePath);
     
     try {
         if(!localFilePath){
@@ -28,7 +30,7 @@ const uploadOnCloudinary = async (localFilePath) => {
         const response = await cloudinary.uploader.upload(fixedFilePath, {
             resource_type: 'auto'
         })
-        console.log("Cloudinary Response: ", response);
+        // console.log("Cloudinary Response: ", response);
         
         // console.log("Exists?", fs.existsSync("public/temp/image.jpg"));
 
