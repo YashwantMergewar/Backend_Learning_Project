@@ -33,7 +33,7 @@ const uploadOnCloudinary = async (localFilePath) => {
         // console.log("Cloudinary Response: ", response);
         
         // console.log("Exists?", fs.existsSync("public/temp/image.jpg"));
-
+        fs.unlinkSync(fixedFilePath) // remove the locally saved temporary file after upload
 
         // file has been uploaded successfully
         return {
