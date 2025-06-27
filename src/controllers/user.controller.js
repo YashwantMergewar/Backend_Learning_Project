@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from 'jsonwebtoken';
+import { deleteImage } from "../utils/deleteImage.js";
 
 // Creating method for access and refresh token
 const generateAccessAndRefreshToken =async (userId) => {
@@ -344,8 +345,15 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
                 avatar: avatar.url
             }
         },
-        {new: true}
+        {new: true} // new: true means return the updated user object
     ).select("-password")
+
+    const oldAvatar = req.user?.avatar || ""; // Get the old avatar URL to delete it from cloudinary later
+    if(!oldAvatar){
+        throw new ApiError(400, "Old avatar not found");
+    }
+    // Delete the old avatar from cloudinary
+    deleteImage(oldAvatar) // This will delete the old avatar from cloudinary
 
     return res
     .status(200)
@@ -378,10 +386,19 @@ const updateUsercoverImage = asyncHandler(async (req, res) => {
         {new: true}
     ).select("-password")
 
+    const oldCoverImage = req.user?.coverImage || ""; // Get the old cover image URL to delete it from cloudinary later
+    if(!oldCoverImage){
+        throw new ApiError(400, "Old cover image not found");
+    }
+    // Delete the old cover image from cloudinary
+    deleteImage(oldCoverImage) // This will delete the old cover image from cloudinary
+
     return res
     .status(200)
     .json(new ApiResponse(200, user, "Cover image updated successfully"))
 })
+
+
 
 export {
     registerUser,
