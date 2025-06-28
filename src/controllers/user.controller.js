@@ -398,7 +398,135 @@ const updateUsercoverImage = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "Cover image updated successfully"))
 })
 
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+    // Step1: Get the userId from the request params
+    const {username} = req.params
 
+    // Step2: Check if the username is not empty
+    if (!username) {
+        throw new ApiError(400, "Username is required");
+    }
+
+    
+    const channel = await User.aggregate([
+        {
+            $match: {username: username.toLowerCase()} // match the username in the database
+        },
+        {
+            $lookup: {
+                from: "subscriptions", // the collection name in the database
+                localField: "_id", // the field in the user collection which is _id
+                foreignField: "channel", // the field in the subscriptions collection which is channel
+                as: "subscribers", // the field in the user object which will contain the subscribers
+            }
+        },
+        {
+            $lookup: {
+                from: "subsciptions", 
+                localField: "_id",
+                foreignField: "subscriber",
+                as: "subscribedTo", // the field in the user object which will contain the subscribedTo channels
+            }
+        },
+        {
+            $addFields: {
+                subscribersCount: {
+                    $size: "$subscribers"
+                },
+                channelSubscribedToCount: {
+                    $size: "$subscribedTo"
+                },
+                isSubscribed: {
+                    $cond: {
+                        if: {$in: [req.user?._id, "$subscribers.subscriber"]}, // check if the user is subscribed to the channel
+                        then: true,
+                        else: false 
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                fullName: 1,
+                username: 1,
+                email: 1,
+                avatar: 1,
+                coverImage: 1,
+                subscribersCount: 1,
+                channelSubscribedToCount: 1,
+                isSubscribed: 1,
+            }
+        }
+    ])
+
+    console.log("Channel Profile: ", channel);
+
+    if (!channel?.length) {
+        throw new ApiError(404, "Channel not found with this username");
+    }
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, channel[0], "Channel profile fetched successfully"))
+    
+})
+
+const getWatchHistory = asyncHandler(async (req, res) => {
+    // Step1: Get the user id from the request object
+    const user = await User.aggregate([
+        {
+            $match: {
+                // if we are getting the user from the request object, we can use req.user._id
+                // but we are using mongoose which converts the user id (mongoDB id) to ObjectId 
+                _id: new mongoose.Types.ObjectId(req.user._id) // match the user id in the database
+            }
+        },
+        {
+            $lookup: {
+                from: "videos", // the collection name in the database, if give first letter capital and it is singular on form, the mongoDB will convert it to plural and lowercase
+                localField: "watchHistory", 
+                foreignField: "_id", // the field in the videos collection which is _id
+                as: "watchHistoryVideos",
+                pipeline: [
+                    {
+                        $lookup:{
+                            from: "users", 
+                            localField: "owner", 
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1
+                                        // Note: try to project it outside separately
+                                    }
+                                },
+                                {
+                                    // optional step to get the first element of the owner array
+                                    $addFields: {
+                                        owner: {
+                                            $first: "$owner" // get the first element of the owner array
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        }
+    ])
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200,
+    user[0].watchHistoryVideos,
+    "watch history fetched successfully"
+    )
+)
+})
 
 export {
     registerUser,
@@ -409,5 +537,7 @@ export {
     getCurrentUser,
     updateAccountDetails,
     updateUserAvatar,
-    updateUsercoverImage
+    updateUsercoverImage,
+    getUserChannelProfile,
+    getWatchHistory
 };
