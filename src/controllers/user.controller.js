@@ -5,6 +5,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from 'jsonwebtoken';
 import { deleteImage } from "../utils/deleteImage.js";
+import mongoose from "mongoose";
 
 // Creating method for access and refresh token
 const generateAccessAndRefreshToken =async (userId) => {
@@ -205,7 +206,11 @@ const logOutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set: {refreshToken: undefined}
+            //$set: {refreshToken: undefined}
+            // another way to set the refresh token to null
+            $unset: {
+                refreshToken: 1 // 1 means true, so it will unset the refreshToken field
+            }
         },
         {
             new: true // this will return the updated user
