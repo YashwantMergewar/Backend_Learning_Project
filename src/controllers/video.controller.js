@@ -92,7 +92,7 @@ const updateVideo = asyncHandler(async (req, res) => {
 
     return res
     .status(200)
-    .json(200, uploadedVideo, "Video updated successfully")
+    .json(new ApiResponse(200, uploadedVideo, "Video updated successfully"))
 
 
 })
