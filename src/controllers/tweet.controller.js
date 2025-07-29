@@ -1,9 +1,9 @@
 import mongoose from 'mongoose';
-import { asyncHandler } from '../utils/asyncHandler';
-import { ApiError } from '../utils/ApiError';
-import { ApiResponse } from '../utils/ApiResponse';
-import { User } from './../models/user.model';
-import { Tweet } from '../models/tweet.model';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { ApiError } from '../utils/ApiError.js';
+import { ApiResponse } from '../utils/ApiResponse.js';
+import { User } from './../models/user.model.js';
+import { Tweet } from './../models/tweet.model.js';
 
 const createTweet = asyncHandler(async (req, res) => {
     // Step 1: Get the content of the tweet from the request body
@@ -14,14 +14,13 @@ const createTweet = asyncHandler(async (req, res) => {
     }
 
     // Step 2: Create a new tweet object
-    const newTweet = await new mongoose.model('Tweet')
-    newTweet({
+    const newTweet = new mongoose.model('Tweet')({
         owner: req.user._id,
         content: content.trim()
     })
 
     // step 3: Save the tweet to the database
-    const savedTweet = await newTweet.Save()
+    const savedTweet = await newTweet.save()
 
     // Step 4: Return the saved tweet in the response
     return res
@@ -31,7 +30,7 @@ const createTweet = asyncHandler(async (req, res) => {
 
 const getUserTweets = asyncHandler(async (req, res) => {
     // Step 1: Get the user ID from the request parameters
-    const userID = req.params.userId
+    const userID = req.user._id || req.params.userId;
     if (!userID) {
         throw new ApiError(400, "User ID is required");
     }
@@ -60,9 +59,16 @@ const updateTweet = asyncHandler(async (req, res) => {
     }
 
     // Step 3: Find the tweet by ID
-    const tweet = await Tweet.findById(tweetID)
-    if (!tweet) {
-        throw new ApiError(404, "Tweet not found");
+    let tweet;
+    try {
+        tweet = await Tweet.findById(tweetID)
+        if (!tweet) {
+            console.log("MongoDB Error:", tweetID);
+            throw new ApiError(404, "Tweet not found");
+        }
+    } catch (error) {
+        console.error("Error finding tweet:", error);
+        throw new ApiError(500, "Internal Server Error");
     }
     // Step 4: update the tweet content
     tweet.content = content.trim()
@@ -84,11 +90,11 @@ const deleteTweet = asyncHandler(async (req, res) => {
     const deletedTweet = await Tweet.findByIdAndDelete(tweetID)
     return res
     .status(200)
-    .json(new ApiResponse200, deletedTweet, "Tweet deleted successfully")
+    .json(new ApiResponse(200, deletedTweet, "Tweet deleted successfully"))
 })
 
 export {
-    createTweet,
+    createTweet,    
     getUserTweets,
     updateTweet,
     deleteTweet

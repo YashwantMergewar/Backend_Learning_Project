@@ -6,8 +6,8 @@ import {
     publishAVideo, 
     togglePublishStatus, 
     updateVideo 
-} from "../controllers/video.controller";
-import { upload } from './../middleware/multer.middleware';
+} from "../controllers/video.controller.js";
+import { upload } from './../middleware/multer.middleware.js';
 
 const router = Router()
 router.route("/").get(getAllVideos).post(

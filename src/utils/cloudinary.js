@@ -3,6 +3,7 @@ import { response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
+
 dotenv.config(); // Adjust the path to your .env file if necessary
 
 cloudinary.config({ 
@@ -13,6 +14,8 @@ cloudinary.config({
 
 const uploadOnCloudinary = async (localFilePath) => {
     // console.log("Uploading file to Cloudinary: ", localFilePath);
+    const ext = path.extname(localFilePath);
+    let resource_type = 'auto'; 
     
     try {
         if(!localFilePath){
@@ -27,8 +30,11 @@ const uploadOnCloudinary = async (localFilePath) => {
         const fixedFilePath = path.resolve(localFilePath).replace(/\\/g, '/');
 
         // upload the file on cloudinary
+        if(['.mp4', '.webm', '.avi', '.mov'].includes(ext.toLowerCase())){
+            resource_type = 'video'; // Set resource type to video for video files
+        }
         const response = await cloudinary.uploader.upload(fixedFilePath, {
-            resource_type: 'auto'
+            resource_type: resource_type, // 'auto' for automatic detection of file type
         })
         // console.log("Cloudinary Response: ", response);
         
@@ -38,7 +44,8 @@ const uploadOnCloudinary = async (localFilePath) => {
         // file has been uploaded successfully
         return {
             url: response.secure_url, // secure_url is the URL of the uploaded file
-            public_id: response.public_id // public_id is the unique identifier for the uploaded file
+            public_id: response.public_id, // public_id is the unique identifier for the uploaded file
+            duration: response.duration
         }
 
         
