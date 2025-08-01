@@ -6,7 +6,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
-    const {page=1, limit=10, query, sortBy, sortType, userId}= req.query
+    let {page=1, limit=10, query, sortBy, sortType} = req.query
 
     page = parseInt(page)
     limit = parseInt(limit)
@@ -14,8 +14,10 @@ const getAllVideos = asyncHandler(async (req, res) => {
     sortType = sortType === 'asc' ? 1 : -1
     const sortConfig = sortBy? {[sortBy] : sortType} : {createdAt: -1} 
 
-    if(!mongoose.isValidObjectId(userId)){
-        throw new ApiError(400, "userId is not given")
+    const userId = req.user?._id
+
+    if(!userId){
+        throw new ApiError(400, "User ID is not found")
     }
 
     const videos = await Video.find({owner: userId})
@@ -44,6 +46,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
     const videoOnCloudinary = await uploadOnCloudinary(videoFile.path)
     const thumbnailOnCloudinary = await uploadOnCloudinary(thumbnail.path)
+    
     if(!videoOnCloudinary){
         throw new ApiError(500, "Video upload failed")
     }
@@ -54,8 +57,8 @@ const publishAVideo = asyncHandler(async (req, res) => {
     const newVideo = await Video.create({
         title: title,
         description: description,
-        videoFile: videoOnCloudinary.secure_url,
-        thumbnail: thumbnailOnCloudinary.secure_url,
+        videoFile: videoOnCloudinary.url,
+        thumbnail: thumbnailOnCloudinary.url,
         duration: videoOnCloudinary.duration,
         owner: req.user?._id
     })
@@ -133,7 +136,8 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    if(mongoose.isValidObjectId(videoId)){
+    
+    if(!mongoose.isValidObjectId(videoId)){
         throw new ApiError(400, "It is not valid object ID")
     }
 

@@ -8,8 +8,10 @@ import {
     updateVideo 
 } from "../controllers/video.controller.js";
 import { upload } from './../middleware/multer.middleware.js';
+import { verifyJWT } from "../middleware/auth.middleware.js";
 
 const router = Router()
+router.use(verifyJWT)
 router.route("/").get(getAllVideos).post(
     upload.fields([
         {
