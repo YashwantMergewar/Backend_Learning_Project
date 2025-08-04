@@ -60,9 +60,9 @@ const getChannelVideos = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid channel ID");
     }
     // Step 3: Fetch videos from the database
-    const allVideos = await Video.findById({ owner: channelId})
+    const allVideos = await Video.find({ owner: channelId})
     .populate("owner", "username avatar")
-    .createdAt(-1) 
+    .sort({createdAt: -1})
     // Step 4: Check if videos exist
     if (!allVideos || allVideos.length === 0) {
         throw new ApiError(404, "No videos found for this channel");

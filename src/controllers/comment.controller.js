@@ -23,7 +23,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
     const comments = await Comment.find({ video: videoId})
     .skip((pageNum - 1) * pageLimit)
     .limit(pageLimit)
-    .populate("user", "username avatar")
+    .populate("owner", "username avatar")
 
     // Step 4: Check if comments exist
     if (!comments || comments.length === 0) {
@@ -39,7 +39,8 @@ const addComment = asyncHandler(async (req, res) => {
     //adding a comment to a video
 
     // Step 1: Get the videoId and comment text from the request body
-    const {videoId, comment} = req.body
+    const {content} = req.body
+    const { videoId } = req.params;
     // Step 2: Validate the videoId
     if (!mongoose.isValidObjectId(videoId)) {
         throw new ApiError(400, "Invalid video ID");
@@ -53,7 +54,7 @@ const addComment = asyncHandler(async (req, res) => {
     const newComment = new Comment({
         user: req.user._id,
         video: videoId,
-        comment: comment
+        content: content
     })
     // Step 5: Save the comment to the database
     const savedComment = await newComment.save();
@@ -65,7 +66,13 @@ const addComment = asyncHandler(async (req, res) => {
 
 const updateComment = asyncHandler(async (req, res) => {
     //Step 1: Get the commentId and updated comment text from the request body
-    const { commentId, comment } = req.body;
+    const { content } = req.body;
+    const { commentId } = req.params;
+
+    // Step 2: Check if the commentId is provided
+    if (!commentId) {
+        throw new ApiError(400, "Comment ID is required");
+    }
 
     // Step 2: Validate the commentId
     if (!mongoose.isValidObjectId(commentId)) {
@@ -73,12 +80,12 @@ const updateComment = asyncHandler(async (req, res) => {
     }
 
     // Step 3: Check if the comment not empty
-    if (!comment || comment.trim() === ""){
+    if (!content || content.trim() === ""){
         throw new ApiError(400, "Comment cannot be empty");
     }
 
     // Step 4: Update the comment in the database
-    const updatedComment = await Comment.findByIdAndUpdate(commentId, { comment }, { new: true})
+    const updatedComment = await Comment.findByIdAndUpdate(commentId, { content }, { new: true})
 
     // Step 5: Return the updated comment in the response
     if (!updatedComment) {
@@ -93,7 +100,12 @@ const updateComment = asyncHandler(async (req, res) => {
 
 const deleteComment = asyncHandler(async (req, res) => {
     // Step 1: Get commentId from the request body
-    const {commentId} = req.body;
+    const {commentId} = req.params;
+
+    // Step 2: Check if the commentId is provided
+    if (!commentId) {
+        throw new ApiError(400, "Comment ID is required");
+    }
 
     // Step 2: Validate the commentId
     if (!mongoose.isValidObjectId(commentId)) {

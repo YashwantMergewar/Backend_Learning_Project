@@ -15,7 +15,8 @@ const createPlaylist = asyncHandler(async (req, res) => {
 
     const playlist = await Playlist.create({
         name ,
-        description
+        description, 
+        owner: req.user?._id
     })
 
     return res
@@ -79,7 +80,7 @@ const addVideoToPlaylist = asyncHandler(async (req, res)=>{
         throw new ApiError(400, "Playlist not found..!")
     }
 
-    if(playlist.videos.include(videoId)){
+    if(playlist.videos.includes(videoId)){
         throw new ApiError(400, "video is already exists..!")
     }
 
