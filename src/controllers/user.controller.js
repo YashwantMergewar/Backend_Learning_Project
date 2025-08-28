@@ -53,8 +53,9 @@ const registerUser = asyncHandler(async (req, res) => {
     
     // Here we are using expert level validation syntax
     if (
-        [fullName, email, username, password].some((field) => field.trim() === "")
+        [fullName, email, username, password].some((field) => !field || field.trim() === "")
     ) {
+        console.log("Register user body: ", req.body);
         throw new ApiError(400, "All fields are required");
     } 
 
@@ -75,12 +76,16 @@ const registerUser = asyncHandler(async (req, res) => {
     // check for image and avatar
     // multer gives us the files access through req.files
     // it might be or might not be present the files thats why we chain the optional chaining operator
-    const avatarLocalPath = req.files?.avatar[0]?.path;
+    let avatarLocalPath;
+    if (req.files && Array.isArray(req.files?.avatar) && req.files?.avatar.length > 0) {
+        avatarLocalPath = req.files?.avatar[0]?.path;
+    }
+
     //const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
     let coverImageLocalPath;
-    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
-        coverImageLocalPath = req.files.coverImage[0].path;        
+    if (req.files && Array.isArray(req.files?.coverImage) && req.files?.coverImage.length > 0) {
+        coverImageLocalPath = req.files?.coverImage[0]?.path;        
     }
 
     // console.log("Avatar Local Path: ", avatarLocalPath);
@@ -88,6 +93,9 @@ const registerUser = asyncHandler(async (req, res) => {
 
     if (!avatarLocalPath || !coverImageLocalPath) {
         throw new ApiError(400, "Avatar and Cover Image are required");
+    }
+    else{
+        console.log("Register users files: ", req.files);
     }
 
     // upload them to cloudinary, avatar
