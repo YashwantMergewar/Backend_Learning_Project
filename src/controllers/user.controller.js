@@ -94,9 +94,9 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!avatarLocalPath || !coverImageLocalPath) {
         throw new ApiError(400, "Avatar and Cover Image are required");
     }
-    else{
-        console.log("Register users files: ", req.files);
-    }
+    // else{
+    //     console.log("Register users files: ", req.files);
+    // }
 
     // upload them to cloudinary, avatar
     const avatar = await uploadOnCloudinary(avatarLocalPath)
