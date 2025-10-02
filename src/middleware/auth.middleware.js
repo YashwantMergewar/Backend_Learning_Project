@@ -7,8 +7,9 @@ import jwt from "jsonwebtoken";
 // Here _ is used to indicate that we are not using the second parameter (res) of the function
 export const verifyJWT = asyncHandler(async (req, _, next) => {
     try {
-        const token = req.cookies?.accessToken || req.headers("authorization").replace("Bearer ", "");
-    
+        const token = req.cookies?.accessToken || req.headers["authorization"]?.split(" ")[1];
+        console.log(token);
+        
         if (!token) {
             throw new ApiError(401, "Unauthrorized request ")
         }
