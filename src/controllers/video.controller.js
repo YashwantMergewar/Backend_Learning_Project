@@ -6,7 +6,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
-    let {page=1, limit=10, query, sortBy, sortType} = req.query
+    let {page=1, limit=10, sortBy, sortType} = req.query
 
     page = parseInt(page)
     limit = parseInt(limit)
@@ -20,7 +20,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
         throw new ApiError(400, "User ID is not found")
     }
 
-    const videos = await Video.find({owner: userId})
+    const videos = await Video.find({})
     .populate("owner", "username avatar")
     .sort(sortConfig)
     .skip((page-1)*limit)
